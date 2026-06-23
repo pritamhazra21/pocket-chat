@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // User profiles: anyone signed in can read (needed to find people by email
+    // and to show names/avatars/presence). You can only write your own doc.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Chats: only the two participants can read/write.
+    match /chats/{chatId} {
+      allow read, write: if signedIn() && request.auth.uid in resource.data.participants;
+      // allow creating a new chat doc where you're a participant
+      allow create: if signedIn() && request.auth.uid in request.resource.data.participants;
+
+      match /messages/{msgId} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow create: if signedIn()
+          && request.auth.uid == request.resource.data.senderId
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      }
+    }
+  }
+}
