@@ -12,6 +12,7 @@ export default function MessageInput({ chatId, recipientUid }) {
   const [panel, setPanel] = useState(null) // 'emoji' | 'gif' | null
   const [upload, setUpload] = useState(null) // { progress }
   const fileRef = useRef(null)
+  const cameraRef = useRef(null)
 
   const notify = (preview) =>
     sendPush({
@@ -90,6 +91,16 @@ export default function MessageInput({ chatId, recipientUid }) {
           onChange={onChange}
           onFocus={() => setPanel(null)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
+        />
+
+        <button className="icon-btn" onClick={() => cameraRef.current?.click()} title="Camera">📷</button>
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={pickFile}
         />
 
         <button className="icon-btn" onClick={() => fileRef.current?.click()} title="Photo / Video">📎</button>
