@@ -12,15 +12,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      // Show the app immediately — never block the UI on a Firestore write.
+      setUser(u)
+      setLoading(false)
       if (u) {
-        await upsertUser(u)
+        // Fire-and-forget; if Firestore is missing/locked it just logs.
+        upsertUser(u).catch((e) => console.error('[auth] profile write failed:', e))
         startPresence(u.uid)
       } else {
         stopPresence()
       }
-      setUser(u)
-      setLoading(false)
     })
     return unsub
   }, [])

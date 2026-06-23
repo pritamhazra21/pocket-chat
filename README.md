@@ -4,10 +4,10 @@ A mobile-first, installable (PWA) 1:1 chat app built on Firebase — free to run
 
 **Features:** Google sign-in · realtime messaging · online/offline presence · typing indicator ·
 read receipts (single ✓ sent, double ✓✓ delivered, blue ✓✓ read) · photo & video sharing ·
-emoji picker · GIF search (Tenor) · push notifications (even when closed) · add-to-homescreen.
+emoji picker · GIF search (GIPHY) · push notifications (even when closed) · add-to-homescreen.
 
 **Stack:** React + Vite + vite-plugin-pwa · Firebase Auth + Firestore + FCM · Cloudinary (media) ·
-Tenor (GIFs) · Cloudflare Worker (push sender) · Firebase Hosting.
+GIPHY (GIFs) · Cloudflare Worker (push sender) · Firebase Hosting.
 
 ---
 
@@ -17,7 +17,7 @@ Tenor (GIFs) · Cloudflare Worker (push sender) · Firebase Hosting.
 |---|---|---|
 | **Firebase** | Web app config (6 values) + Web Push VAPID key | console.firebase.google.com |
 | **Cloudinary** | Cloud name + an **unsigned** upload preset | cloudinary.com (free) |
-| **Tenor** | API key | console.cloud.google.com (enable "Tenor API") |
+| **GIPHY** | API key | developers.giphy.com (instant, free) |
 | **Cloudflare** | Free account (for the push Worker) | dash.cloudflare.com |
 
 ---
@@ -39,10 +39,10 @@ Tenor (GIFs) · Cloudflare Worker (push sender) · Firebase Hosting.
 2. Settings → **Upload** → *Upload presets* → **Add unsigned preset**. Save the preset name.
 3. Put both into `.env` (`VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`).
 
-## 3. Tenor (GIFs)
+## 3. GIPHY (GIFs)
 
-1. https://console.cloud.google.com → enable the **Tenor API** → **Create credentials → API key**.
-2. Put it in `VITE_TENOR_API_KEY`.
+1. https://developers.giphy.com → **Create an App** → choose **API** (not SDK) → copy the **API Key**.
+2. Put it in `VITE_GIPHY_API_KEY`.
 
 ## 4. Configure & run
 

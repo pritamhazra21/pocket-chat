@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { searchGifs } from '../lib/tenor.js'
+import { searchGifs } from '../lib/giphy.js'
 
 export default function GifPicker({ onPick, onClose }) {
   const [q, setQ] = useState('')

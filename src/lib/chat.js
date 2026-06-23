@@ -35,6 +35,12 @@ export async function upsertUser(user) {
   )
 }
 
+// Live list of every user who has signed in (the people directory).
+export function listenAllUsers(cb) {
+  const q = query(collection(db, 'users'), orderBy('displayName'))
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => d.data())))
+}
+
 // Find a person to chat with by exact email.
 export async function findUserByEmail(email) {
   const q = query(
@@ -67,13 +73,21 @@ export async function ensureChat(me, other) {
 }
 
 // Live list of my chats, newest activity first.
+// NOTE: we deliberately don't orderBy() in the query — combining
+// array-contains with orderBy needs a composite index. We sort client-side.
 export function listenChats(uid, cb) {
-  const q = query(
-    collection(db, 'chats'),
-    where('participants', 'array-contains', uid),
-    orderBy('lastMessageTime', 'desc')
+  const q = query(collection(db, 'chats'), where('participants', 'array-contains', uid))
+  return onSnapshot(
+    q,
+    (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      rows.sort(
+        (a, b) => (b.lastMessageTime?.toMillis?.() || 0) - (a.lastMessageTime?.toMillis?.() || 0)
+      )
+      cb(rows)
+    },
+    (err) => console.error('[chats] listen failed:', err)
   )
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
 }
 
 // Live messages in a chat.

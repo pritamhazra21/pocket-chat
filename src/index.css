@@ -124,6 +124,11 @@ body {
   background: var(--accent); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 
+/* People directory inside the New chat sheet */
+.people-list { margin-top: 12px; max-height: 50vh; overflow-y: auto; }
+.people-list .list-item { border-bottom: 1px solid var(--line); }
+.people-list .list-text { display: flex; flex-direction: column; }
+
 /* ---- Messages ---- */
 .messages {
   flex: 1; overflow-y: auto; padding: 12px;
