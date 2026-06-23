@@ -1,22 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { ensureChat, listenAllUsers, listenChats } from '../lib/chat.js'
+import { ensureChat, listenAllUsers, listenChats, listenPrefs } from '../lib/chat.js'
+import Settings from './Settings.jsx'
 
 export default function ChatList({ onOpen }) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [chats, setChats] = useState([])
+  const [prefs, setPrefs] = useState({})
   const [showNew, setShowNew] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [people, setPeople] = useState([])
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => listenChats(user.uid, setChats), [user.uid])
+  useEffect(() => listenPrefs(user.uid, setPrefs), [user.uid])
 
   // Load the people directory only while the "new chat" sheet is open.
   useEffect(() => {
     if (!showNew) return
     return listenAllUsers(setPeople)
   }, [showNew])
+
+  // Apply a private nickname if I've set one for this person.
+  const nameFor = (uid, fallback) => prefs?.nicknames?.[uid] || fallback || 'Unknown'
 
   const otherOf = (chat) => {
     const otherUid = chat.participants.find((p) => p !== user.uid)
@@ -55,13 +63,42 @@ export default function ChatList({ onOpen }) {
   }
 
   return (
-    <div className="screen">
+    <div className="screen" onClick={() => menuOpen && setMenuOpen(false)}>
       <header className="topbar">
+        <div className="menu-wrap">
+          <button
+            className="icon-btn dots"
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen((v) => !v)
+            }}
+            title="Menu"
+          >
+            ⋮
+          </button>
+          {menuOpen && (
+            <div className="dropdown" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="dropdown-item"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setShowSettings(true)
+                }}
+              >
+                ⚙️ Settings
+              </button>
+              <button className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                ✖ Close
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="title">Pocket Chat</div>
+
         <div className="me">
           {user.photoURL && <img className="avatar sm" src={user.photoURL} alt="" />}
-          <span>{user.displayName}</span>
         </div>
-        <button className="icon-btn" onClick={logout} title="Sign out">⎋</button>
       </header>
 
       <div className="list">
@@ -70,25 +107,33 @@ export default function ChatList({ onOpen }) {
         )}
         {chats.map((chat) => {
           const other = otherOf(chat)
+          const unread = chat.unread?.[user.uid] || 0
           return (
-            <button key={chat.id} className="list-item" onClick={() => onOpen({ id: chat.id, other })}>
+            <button
+              key={chat.id}
+              className={'list-item' + (unread ? ' unread' : '')}
+              onClick={() => onOpen({ id: chat.id, other })}
+            >
               {other.photoURL ? (
                 <img className="avatar" src={other.photoURL} alt="" />
               ) : (
-                <div className="avatar placeholder">{(other.displayName || '?')[0]}</div>
+                <div className="avatar placeholder">{nameFor(other.uid, other.displayName)[0]}</div>
               )}
               <div className="list-text">
                 <div className="row">
-                  <span className="name">{other.displayName || 'Unknown'}</span>
+                  <span className="name">{nameFor(other.uid, other.displayName)}</span>
                 </div>
                 <span className="preview muted">{chat.lastMessage || 'Say hi 👋'}</span>
               </div>
+              {unread > 0 && <span className="badge">{unread > 99 ? '99+' : unread}</span>}
             </button>
           )
         })}
       </div>
 
       <button className="fab" onClick={() => setShowNew(true)}>+</button>
+
+      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
 
       {showNew && (
         <div className="sheet-backdrop" onClick={() => setShowNew(false)}>

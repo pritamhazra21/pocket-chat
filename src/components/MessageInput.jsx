@@ -26,7 +26,7 @@ export default function MessageInput({ chatId, recipientUid }) {
     if (!t) return
     setText('')
     setTyping(chatId, user.uid, false)
-    await sendMessage(chatId, user.uid, { text: t })
+    await sendMessage(chatId, user.uid, recipientUid, { text: t })
     notify(t)
   }
 
@@ -42,7 +42,7 @@ export default function MessageInput({ chatId, recipientUid }) {
     setUpload({ progress: 0 })
     try {
       const media = await uploadToCloudinary(file, (p) => setUpload({ progress: p }))
-      await sendMessage(chatId, user.uid, { media })
+      await sendMessage(chatId, user.uid, recipientUid, { media })
       notify(media.type === 'video' ? '🎥 Video' : '📷 Photo')
     } catch (err) {
       alert(err.message)
@@ -53,7 +53,7 @@ export default function MessageInput({ chatId, recipientUid }) {
 
   const sendGif = async (url) => {
     setPanel(null)
-    await sendMessage(chatId, user.uid, { gif: url })
+    await sendMessage(chatId, user.uid, recipientUid, { gif: url })
     notify('🎞️ GIF')
   }
 

@@ -9,6 +9,11 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
+
+      // Private per-user data (e.g. nicknames) — only the owner can read/write.
+      match /private/{doc} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
     }
 
     // Chats: only the two participants can read/write.

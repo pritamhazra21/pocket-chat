@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -111,7 +112,7 @@ export function listenUser(uid, cb) {
 }
 
 // payload: { text } | { media: { url, type } } | { gif: url }
-export async function sendMessage(chatId, senderId, payload) {
+export async function sendMessage(chatId, senderId, recipientId, payload) {
   const msg = {
     senderId,
     createdAt: serverTimestamp(),
@@ -138,6 +139,9 @@ export async function sendMessage(chatId, senderId, payload) {
   await updateDoc(doc(db, 'chats', chatId), {
     lastMessage: preview,
     lastMessageTime: serverTimestamp(),
+    lastMessageSender: senderId,
+    // bump the recipient's unread counter
+    [`unread.${recipientId}`]: increment(1),
   })
 }
 
@@ -157,8 +161,29 @@ export function onTypingInput(chatId, uid) {
 
 // Mark the chat as read up to "now" for this user. Used for read receipts:
 // the OTHER person's lastRead tells us which of my messages they've seen.
+// Also clears this user's unread counter.
 export async function markRead(chatId, uid) {
   await updateDoc(doc(db, 'chats', chatId), {
     [`lastRead.${uid}`]: serverTimestamp(),
+    [`unread.${uid}`]: 0,
   }).catch(() => {})
+}
+
+// ---- Private per-user preferences (nicknames). Stored under the user's own
+// private subcollection so only they can read/write them. ----
+function prefsRef(uid) {
+  return doc(db, 'users', uid, 'private', 'prefs')
+}
+
+export function listenPrefs(uid, cb) {
+  return onSnapshot(
+    prefsRef(uid),
+    (d) => cb(d.exists() ? d.data() : {}),
+    (err) => console.error('[prefs] listen failed:', err)
+  )
+}
+
+// Save (or clear, if empty) a private nickname for another user.
+export async function setNickname(uid, otherUid, nickname) {
+  await setDoc(prefsRef(uid), { nicknames: { [otherUid]: nickname || '' } }, { merge: true })
 }

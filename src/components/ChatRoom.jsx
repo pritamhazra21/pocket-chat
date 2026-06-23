@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { listenChat, listenMessages, listenUser, markRead } from '../lib/chat.js'
+import {
+  listenChat,
+  listenMessages,
+  listenPrefs,
+  listenUser,
+  markRead,
+  setNickname,
+} from '../lib/chat.js'
 import { isOnline } from '../lib/presence.js'
 import MessageBubble from './MessageBubble.jsx'
 import MessageInput from './MessageInput.jsx'
@@ -10,11 +17,27 @@ export default function ChatRoom({ chat, onBack }) {
   const [messages, setMessages] = useState([])
   const [chatDoc, setChatDoc] = useState(null)
   const [otherUser, setOtherUser] = useState(null)
+  const [prefs, setPrefs] = useState({})
+  const [editingNick, setEditingNick] = useState(false)
+  const [nickInput, setNickInput] = useState('')
   const bottomRef = useRef(null)
 
   useEffect(() => listenMessages(chat.id, setMessages), [chat.id])
   useEffect(() => listenChat(chat.id, setChatDoc), [chat.id])
   useEffect(() => listenUser(chat.other.uid, setOtherUser), [chat.other.uid])
+  useEffect(() => listenPrefs(user.uid, setPrefs), [user.uid])
+
+  const savedNick = prefs?.nicknames?.[chat.other.uid] || ''
+  const displayName = savedNick || chat.other.displayName
+
+  const openNickEditor = () => {
+    setNickInput(savedNick)
+    setEditingNick(true)
+  }
+  const saveNick = async () => {
+    await setNickname(user.uid, chat.other.uid, nickInput.trim())
+    setEditingNick(false)
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -53,12 +76,13 @@ export default function ChatRoom({ chat, onBack }) {
         {chat.other.photoURL ? (
           <img className="avatar sm" src={chat.other.photoURL} alt="" />
         ) : (
-          <div className="avatar sm placeholder">{(chat.other.displayName || '?')[0]}</div>
+          <div className="avatar sm placeholder">{(displayName || '?')[0]}</div>
         )}
-        <div className="head-text">
-          <span className="name">{chat.other.displayName}</span>
+        <button className="head-text head-tap" onClick={openNickEditor} title="Set nickname">
+          <span className="name">{displayName}</span>
           <span className={'status ' + (status === 'online' ? 'on' : '')}>{status}</span>
-        </div>
+        </button>
+        <button className="icon-btn nick-btn" onClick={openNickEditor} title="Set nickname">✎</button>
       </header>
 
       <div className="messages">
@@ -80,6 +104,31 @@ export default function ChatRoom({ chat, onBack }) {
       </div>
 
       <MessageInput chatId={chat.id} recipientUid={chat.other.uid} />
+
+      {editingNick && (
+        <div className="sheet-backdrop" onClick={() => setEditingNick(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-head">
+              <h3>Nickname</h3>
+              <button className="icon-btn" onClick={() => setEditingNick(false)}>✕</button>
+            </div>
+            <p className="muted">
+              Set a private nickname for <b>{chat.other.displayName}</b>. Only you can see it.
+            </p>
+            <input
+              type="text"
+              placeholder={chat.other.displayName}
+              value={nickInput}
+              onChange={(e) => setNickInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveNick()}
+              autoFocus
+            />
+            <button className="primary" onClick={saveNick}>
+              {nickInput.trim() ? 'Save nickname' : 'Clear nickname'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
