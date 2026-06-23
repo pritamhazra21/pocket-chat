@@ -65,6 +65,12 @@ export default function ChatList({ onOpen }) {
   return (
     <div className="screen" onClick={() => menuOpen && setMenuOpen(false)}>
       <header className="topbar">
+        <div className="me">
+          {user.photoURL && <img className="avatar sm" src={user.photoURL} alt="" />}
+        </div>
+
+        <div className="title">Pocket Chat</div>
+
         <div className="menu-wrap">
           <button
             className="icon-btn dots"
@@ -92,12 +98,6 @@ export default function ChatList({ onOpen }) {
               </button>
             </div>
           )}
-        </div>
-
-        <div className="title">Pocket Chat</div>
-
-        <div className="me">
-          {user.photoURL && <img className="avatar sm" src={user.photoURL} alt="" />}
         </div>
       </header>
 
