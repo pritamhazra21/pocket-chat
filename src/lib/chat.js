@@ -98,7 +98,7 @@ export function listenMessages(chatId, cb) {
   const q = query(
     collection(db, 'chats', chatId, 'messages'),
     orderBy('createdAt', 'asc'),
-    limit(200)
+    limit(500)
   )
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
 }
@@ -131,6 +131,10 @@ export async function sendMessage(chatId, senderId, recipientId, payload) {
     msg.type = 'gif'
     msg.media = { url: payload.gif, type: 'gif' }
     preview = '🎞️ GIF'
+  } else if (payload.audio) {
+    msg.type = 'audio'
+    msg.media = { url: payload.audio.url, type: 'audio', duration: payload.audio.duration || 0 }
+    preview = '🎤 Voice message'
   } else if (payload.media) {
     msg.type = payload.media.type === 'video' ? 'video' : 'image'
     msg.media = payload.media

@@ -7,7 +7,9 @@ export async function uploadToCloudinary(file, onProgress) {
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     throw new Error('Cloudinary is not configured. Set VITE_CLOUDINARY_* in .env')
   }
-  const resourceType = file.type.startsWith('video') ? 'video' : 'image'
+  // Cloudinary stores audio under the 'video' resource type.
+  const resourceType =
+    file.type.startsWith('video') || file.type.startsWith('audio') ? 'video' : 'image'
   const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`
 
   const form = new FormData()

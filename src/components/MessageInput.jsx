@@ -6,16 +6,25 @@ import { sendPush } from '../lib/push.js'
 import EmojiPicker from './EmojiPicker.jsx'
 import GifPicker from './GifPicker.jsx'
 
+function fmt(secs) {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
 export default function MessageInput({ chatId, recipientUid }) {
   const { user } = useAuth()
   const [text, setText] = useState('')
   const [panel, setPanel] = useState(null) // 'emoji' | 'gif' | null
   const [upload, setUpload] = useState(null) // { progress }
+  const [recording, setRecording] = useState(false)
+  const [recSecs, setRecSecs] = useState(0)
   const fileRef = useRef(null)
   const cameraRef = useRef(null)
   const taRef = useRef(null)
+  const recRef = useRef(null) // { rec, stream, chunks, start }
+  const recTimer = useRef(null)
 
-  // Auto-grow the textarea with content, up to a max height.
   const adjustHeight = () => {
     const el = taRef.current
     if (!el) return
@@ -35,7 +44,7 @@ export default function MessageInput({ chatId, recipientUid }) {
     const t = text.trim()
     if (!t) return
     setText('')
-    if (taRef.current) taRef.current.style.height = 'auto' // reset to one line
+    if (taRef.current) taRef.current.style.height = 'auto'
     setTyping(chatId, user.uid, false)
     await sendMessage(chatId, user.uid, recipientUid, { text: t })
     notify(t)
@@ -69,6 +78,66 @@ export default function MessageInput({ chatId, recipientUid }) {
     notify('🎞️ GIF')
   }
 
+  // ---- Voice messages ----
+  const startRecording = async () => {
+    if (recording) return
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const rec = new MediaRecorder(stream)
+      const chunks = []
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data)
+      rec.start()
+      recRef.current = { rec, stream, chunks, start: Date.now() }
+      setRecording(true)
+      setRecSecs(0)
+      recTimer.current = setInterval(() => setRecSecs((s) => s + 1), 1000)
+    } catch {
+      alert('Microphone not available or permission denied.')
+    }
+  }
+
+  const stopTracks = () => {
+    if (recTimer.current) clearInterval(recTimer.current)
+    recTimer.current = null
+    recRef.current?.stream.getTracks().forEach((t) => t.stop())
+  }
+
+  const cancelRecording = () => {
+    const r = recRef.current
+    setRecording(false)
+    if (!r) return
+    r.rec.onstop = () => stopTracks()
+    try { r.rec.stop() } catch {}
+    recRef.current = null
+  }
+
+  const finishRecording = async () => {
+    const r = recRef.current
+    if (!r) return
+    setRecording(false)
+    const duration = Math.max(1, Math.round((Date.now() - r.start) / 1000))
+    const blob = await new Promise((resolve) => {
+      r.rec.onstop = () => {
+        stopTracks()
+        resolve(new Blob(r.chunks, { type: 'audio/webm' }))
+      }
+      try { r.rec.stop() } catch { resolve(null) }
+    })
+    recRef.current = null
+    if (!blob || blob.size === 0) return
+    const file = new File([blob], `voice-${duration}s.webm`, { type: 'audio/webm' })
+    setUpload({ progress: 0 })
+    try {
+      const media = await uploadToCloudinary(file, (p) => setUpload({ progress: p }))
+      await sendMessage(chatId, user.uid, recipientUid, { audio: { url: media.url, duration } })
+      notify('🎤 Voice message')
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setUpload(null)
+    }
+  }
+
   return (
     <div className="composer-wrap">
       {panel === 'emoji' && (
@@ -83,57 +152,56 @@ export default function MessageInput({ chatId, recipientUid }) {
         </div>
       )}
 
-      <div className="composer">
-        <button
-          className="icon-btn"
-          onClick={() => setPanel(panel === 'emoji' ? null : 'emoji')}
-          title="Emoji"
-        >😊</button>
-        <button
-          className="icon-btn"
-          onClick={() => setPanel(panel === 'gif' ? null : 'gif')}
-          title="GIF"
-        >GIF</button>
+      {recording ? (
+        <div className="composer recording-bar">
+          <span className="rec-dot" />
+          <span className="rec-time">{fmt(recSecs)}</span>
+          <span className="rec-label muted">Recording…</span>
+          <button className="icon-btn" title="Cancel" onClick={cancelRecording}>🗑</button>
+          <button className="send-btn" title="Send" onClick={finishRecording}>➤</button>
+        </div>
+      ) : (
+        <div className="composer">
+          <button
+            className="icon-btn"
+            onClick={() => setPanel(panel === 'emoji' ? null : 'emoji')}
+            title="Emoji"
+          >😊</button>
+          <button
+            className="icon-btn"
+            onClick={() => setPanel(panel === 'gif' ? null : 'gif')}
+            title="GIF"
+          >GIF</button>
 
-        <textarea
-          ref={taRef}
-          className="text-input composer-text"
-          placeholder="Message"
-          rows={1}
-          value={text}
-          onChange={onChange}
-          onFocus={() => setPanel(null)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              send()
-            }
-          }}
-        />
+          <textarea
+            ref={taRef}
+            className="text-input composer-text"
+            placeholder="Message"
+            rows={1}
+            value={text}
+            onChange={onChange}
+            onFocus={() => setPanel(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                send()
+              }
+            }}
+          />
 
-        <button className="icon-btn" onClick={() => cameraRef.current?.click()} title="Camera">📷</button>
-        <input
-          ref={cameraRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          onChange={pickFile}
-        />
+          <button className="icon-btn" onClick={() => cameraRef.current?.click()} title="Camera">📷</button>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={pickFile} />
 
-        <button className="icon-btn" onClick={() => fileRef.current?.click()} title="Photo / Video">📎</button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*,video/*"
-          hidden
-          onChange={pickFile}
-        />
+          <button className="icon-btn" onClick={() => fileRef.current?.click()} title="Photo / Video">📎</button>
+          <input ref={fileRef} type="file" accept="image/*,video/*" hidden onChange={pickFile} />
 
-        {text.trim() ? (
-          <button className="send-btn" onClick={send}>➤</button>
-        ) : null}
-      </div>
+          {text.trim() ? (
+            <button className="send-btn" onClick={send}>➤</button>
+          ) : (
+            <button className="send-btn mic" onClick={startRecording} title="Record voice">🎤</button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

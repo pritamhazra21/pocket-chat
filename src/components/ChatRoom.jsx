@@ -13,6 +13,10 @@ import {
 import { isOnline } from '../lib/presence.js'
 import MessageBubble from './MessageBubble.jsx'
 import MessageInput from './MessageInput.jsx'
+import ChatInfo from './ChatInfo.jsx'
+import MediaViewer from './MediaViewer.jsx'
+
+const MEDIA_TYPES = ['image', 'video', 'gif']
 
 export default function ChatRoom({ chat, onBack }) {
   const { user } = useAuth()
@@ -24,7 +28,19 @@ export default function ChatRoom({ chat, onBack }) {
   const [nickInput, setNickInput] = useState('')
   const [selectedMsg, setSelectedMsg] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showInfo, setShowInfo] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState(null)
   const bottomRef = useRef(null)
+
+  // All media in this chat (for the gallery + viewer), oldest→newest.
+  const mediaItems = messages
+    .filter((m) => MEDIA_TYPES.includes(m.type) && m.media?.url)
+    .map((m) => ({ id: m.id, url: m.media.url, type: m.type }))
+
+  const openMediaById = (msg) => {
+    const idx = mediaItems.findIndex((m) => m.id === msg.id)
+    if (idx >= 0) setViewerIndex(idx)
+  }
 
   useEffect(() => listenMessages(chat.id, setMessages), [chat.id])
   useEffect(() => listenChat(chat.id, setChatDoc), [chat.id])
@@ -133,6 +149,15 @@ export default function ChatRoom({ chat, onBack }) {
                 className="dropdown-item"
                 onClick={() => {
                   setMenuOpen(false)
+                  setShowInfo(true)
+                }}
+              >
+                🖼️ Media & links
+              </button>
+              <button
+                className="dropdown-item"
+                onClick={() => {
+                  setMenuOpen(false)
                   openNickEditor()
                 }}
               >
@@ -155,6 +180,7 @@ export default function ChatRoom({ chat, onBack }) {
             otherLastRead={otherLastRead}
             otherLastSeen={otherLastSeen}
             onSelect={setSelectedMsg}
+            onOpenMedia={openMediaById}
           />
         ))}
         {otherTyping && (
@@ -204,6 +230,25 @@ export default function ChatRoom({ chat, onBack }) {
             <button className="action-item" onClick={() => setSelectedMsg(null)}>Cancel</button>
           </div>
         </div>
+      )}
+
+      {showInfo && (
+        <ChatInfo
+          title={displayName}
+          mediaItems={mediaItems}
+          messages={messages}
+          onOpenMedia={(i) => setViewerIndex(i)}
+          onClose={() => setShowInfo(false)}
+        />
+      )}
+
+      {viewerIndex !== null && (
+        <MediaViewer
+          items={mediaItems}
+          index={viewerIndex}
+          onIndex={setViewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
       )}
     </div>
   )

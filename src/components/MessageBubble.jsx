@@ -37,7 +37,14 @@ function Ticks({ status }) {
   )
 }
 
-export default function MessageBubble({ message, mine, otherLastRead, otherLastSeen, onSelect }) {
+export default function MessageBubble({
+  message,
+  mine,
+  otherLastRead,
+  otherLastSeen,
+  onSelect,
+  onOpenMedia,
+}) {
   const { type, text, media } = message
   const status = mine ? statusOf(message, otherLastRead, otherLastSeen) : null
   const timer = useRef(null)
@@ -64,15 +71,34 @@ export default function MessageBubble({ message, mine, otherLastRead, otherLastS
       {type === 'text' && <span className="text">{text}</span>}
 
       {type === 'image' && (
-        <a href={media.url} target="_blank" rel="noreferrer">
-          <img className="media" src={media.url} alt="shared" loading="lazy" />
-        </a>
+        <img
+          className="media"
+          src={media.url}
+          alt="shared"
+          loading="lazy"
+          onClick={() => onOpenMedia?.(message)}
+        />
       )}
 
-      {type === 'gif' && <img className="media gif" src={media.url} alt="gif" loading="lazy" />}
+      {type === 'gif' && (
+        <img
+          className="media gif"
+          src={media.url}
+          alt="gif"
+          loading="lazy"
+          onClick={() => onOpenMedia?.(message)}
+        />
+      )}
 
       {type === 'video' && (
         <video className="media" src={media.url} controls playsInline preload="metadata" />
+      )}
+
+      {type === 'audio' && (
+        <div className="voice">
+          <span className="voice-icon">🎤</span>
+          <audio className="voice-audio" src={media.url} controls preload="metadata" />
+        </div>
       )}
 
       <span className="meta">
