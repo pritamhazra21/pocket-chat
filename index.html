@@ -13,6 +13,15 @@
     <meta name="apple-mobile-web-app-title" content="Chat" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>Pocket Chat</title>
+    <script>
+      // Apply saved theme/background before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem('pc_theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+        var b = localStorage.getItem('pc_chatbg');
+        if (b) document.documentElement.setAttribute('data-chat-bg', b);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
