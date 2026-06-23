@@ -1,11 +1,31 @@
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { CHAT_BGS, THEMES, useTheme } from '../context/ThemeContext.jsx'
+import { registerForPush } from '../lib/fcm.js'
 import { IconClose } from './Icons.jsx'
 
 export default function Settings({ onClose }) {
   const { user, logout } = useAuth()
   const { theme, setTheme, chatBg, setChatBg } = useTheme()
-  const notifPerm = typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  const [perm, setPerm] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  )
+  const [enabling, setEnabling] = useState(false)
+
+  const enableNotifications = async () => {
+    setEnabling(true)
+    try {
+      const token = await registerForPush(user.uid)
+      setPerm(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
+      if (!token && Notification.permission !== 'granted') {
+        alert('Notifications were blocked. Enable them for this site in your browser settings.')
+      }
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setEnabling(false)
+    }
+  }
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -61,7 +81,13 @@ export default function Settings({ onClose }) {
         <div className="settings-group">
           <div className="settings-row">
             <span>🔔 Notifications</span>
-            <span className="muted">{notifPerm}</span>
+            {perm === 'granted' ? (
+              <span className="muted">Enabled</span>
+            ) : (
+              <button className="pill" disabled={enabling} onClick={enableNotifications}>
+                {enabling ? 'Enabling…' : 'Enable'}
+              </button>
+            )}
           </div>
           <div className="settings-row">
             <span>📦 Version</span>
