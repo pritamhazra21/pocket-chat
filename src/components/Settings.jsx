@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext.jsx'
 import { CHAT_BGS, THEMES, useTheme } from '../context/ThemeContext.jsx'
+import { IconClose } from './Icons.jsx'
 
 export default function Settings({ onClose }) {
   const { user, logout } = useAuth()
@@ -11,7 +12,7 @@ export default function Settings({ onClose }) {
       <div className="sheet settings" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <h3>Settings</h3>
-          <button className="icon-btn" onClick={onClose}>✕</button>
+          <button className="icon-btn" onClick={onClose}><IconClose /></button>
         </div>
 
         <div className="profile-card">

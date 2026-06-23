@@ -5,6 +5,7 @@ import { uploadToCloudinary } from '../lib/cloudinary.js'
 import { sendPush } from '../lib/push.js'
 import EmojiPicker from './EmojiPicker.jsx'
 import GifPicker from './GifPicker.jsx'
+import { IconCamera, IconMic, IconPaperclip, IconSend, IconSmile, IconTrash } from './Icons.jsx'
 
 function fmt(secs) {
   const m = Math.floor(secs / 60)
@@ -44,7 +45,10 @@ export default function MessageInput({ chatId, recipientUid }) {
     const t = text.trim()
     if (!t) return
     setText('')
-    if (taRef.current) taRef.current.style.height = 'auto'
+    if (taRef.current) {
+      taRef.current.style.height = 'auto'
+      taRef.current.focus() // keep the keyboard open
+    }
     setTyping(chatId, user.uid, false)
     await sendMessage(chatId, user.uid, recipientUid, { text: t })
     notify(t)
@@ -154,11 +158,21 @@ export default function MessageInput({ chatId, recipientUid }) {
 
       {recording ? (
         <div className="composer recording-bar">
-          <span className="rec-dot" />
-          <span className="rec-time">{fmt(recSecs)}</span>
-          <span className="rec-label muted">Recording…</span>
-          <button className="icon-btn" title="Cancel" onClick={cancelRecording}>🗑</button>
-          <button className="send-btn" title="Send" onClick={finishRecording}>➤</button>
+          <button className="icon-btn danger-icon" title="Cancel" onClick={cancelRecording}>
+            <IconTrash size={22} />
+          </button>
+          <div className="rec-info">
+            <span className="rec-dot" />
+            <div className="rec-wave">
+              {Array.from({ length: 16 }).map((_, i) => (
+                <span key={i} className="rwbar" style={{ animationDelay: i * 0.07 + 's' }} />
+              ))}
+            </div>
+            <span className="rec-time">{fmt(recSecs)}</span>
+          </div>
+          <button className="send-btn" title="Send" onClick={finishRecording}>
+            <IconSend size={20} />
+          </button>
         </div>
       ) : (
         <div className="composer">
@@ -166,9 +180,9 @@ export default function MessageInput({ chatId, recipientUid }) {
             className="icon-btn"
             onClick={() => setPanel(panel === 'emoji' ? null : 'emoji')}
             title="Emoji"
-          >😊</button>
+          ><IconSmile /></button>
           <button
-            className="icon-btn"
+            className={'icon-btn gif-btn' + (panel === 'gif' ? ' active' : '')}
             onClick={() => setPanel(panel === 'gif' ? null : 'gif')}
             title="GIF"
           >GIF</button>
@@ -189,16 +203,24 @@ export default function MessageInput({ chatId, recipientUid }) {
             }}
           />
 
-          <button className="icon-btn" onClick={() => cameraRef.current?.click()} title="Camera">📷</button>
+          <button className="icon-btn" onClick={() => cameraRef.current?.click()} title="Camera"><IconCamera /></button>
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={pickFile} />
 
-          <button className="icon-btn" onClick={() => fileRef.current?.click()} title="Photo / Video">📎</button>
+          <button className="icon-btn" onClick={() => fileRef.current?.click()} title="Photo / Video"><IconPaperclip /></button>
           <input ref={fileRef} type="file" accept="image/*,video/*" hidden onChange={pickFile} />
 
           {text.trim() ? (
-            <button className="send-btn" onClick={send}>➤</button>
+            <button
+              className="send-btn"
+              onClick={send}
+              onMouseDown={(e) => e.preventDefault()} // don't blur the textarea
+            >
+              <IconSend size={20} />
+            </button>
           ) : (
-            <button className="send-btn mic" onClick={startRecording} title="Record voice">🎤</button>
+            <button className="send-btn mic" onClick={startRecording} title="Record voice">
+              <IconMic size={20} />
+            </button>
           )}
         </div>
       )}

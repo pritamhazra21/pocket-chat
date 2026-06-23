@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { downloadMedia, extractLinks } from '../lib/download.js'
+import { IconBack, IconDownload, IconLink, IconPlay } from './Icons.jsx'
 
 export default function ChatInfo({ title, mediaItems, messages, onOpenMedia, onClose }) {
   const [tab, setTab] = useState('media')
@@ -18,7 +19,7 @@ export default function ChatInfo({ title, mediaItems, messages, onOpenMedia, onC
   return (
     <div className="screen info-page slide-in">
       <header className="topbar">
-        <button className="icon-btn" onClick={onClose}>‹</button>
+        <button className="icon-btn" onClick={onClose}><IconBack /></button>
         <div className="title">{title}</div>
       </header>
 
@@ -40,12 +41,12 @@ export default function ChatInfo({ title, mediaItems, messages, onOpenMedia, onC
                 {m.type === 'video' ? (
                   <>
                     <video src={m.url} preload="metadata" />
-                    <span className="play-badge">▶</span>
+                    <span className="play-badge"><IconPlay size={26} /></span>
                   </>
                 ) : (
                   <img src={m.url} alt="media" loading="lazy" />
                 )}
-                <button
+                <span
                   className="cell-download"
                   title="Save"
                   onClick={(e) => {
@@ -53,8 +54,8 @@ export default function ChatInfo({ title, mediaItems, messages, onOpenMedia, onC
                     downloadMedia(m.url, `media-${i}`)
                   }}
                 >
-                  ⬇
-                </button>
+                  <IconDownload size={15} />
+                </span>
               </button>
             ))}
           </div>
@@ -66,7 +67,7 @@ export default function ChatInfo({ title, mediaItems, messages, onOpenMedia, onC
           {links.length === 0 && <p className="muted empty">No links yet.</p>}
           {links.map((l) => (
             <a key={l.id} className="link-item" href={l.url} target="_blank" rel="noreferrer">
-              <span className="link-icon">🔗</span>
+              <span className="link-icon"><IconLink size={18} /></span>
               <span className="link-url">{l.url}</span>
             </a>
           ))}

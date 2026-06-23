@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ensureChat, listenAllUsers, listenChats, listenPrefs } from '../lib/chat.js'
 import Settings from './Settings.jsx'
+import { IconDots, IconSettings } from './Icons.jsx'
 
 export default function ChatList({ onOpen }) {
   const { user } = useAuth()
@@ -80,7 +81,7 @@ export default function ChatList({ onOpen }) {
             }}
             title="Menu"
           >
-            ⋮
+            <IconDots />
           </button>
           {menuOpen && (
             <div className="dropdown" onClick={(e) => e.stopPropagation()}>
@@ -91,10 +92,7 @@ export default function ChatList({ onOpen }) {
                   setShowSettings(true)
                 }}
               >
-                ⚙️ Settings
-              </button>
-              <button className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                ✖ Close
+                <IconSettings size={18} /> Settings
               </button>
             </div>
           )}

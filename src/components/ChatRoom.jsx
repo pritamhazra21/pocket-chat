@@ -15,6 +15,7 @@ import MessageBubble from './MessageBubble.jsx'
 import MessageInput from './MessageInput.jsx'
 import ChatInfo from './ChatInfo.jsx'
 import MediaViewer from './MediaViewer.jsx'
+import { IconBack, IconClose, IconDots, IconImage, IconPencil, IconTrash } from './Icons.jsx'
 
 const MEDIA_TYPES = ['image', 'video', 'gif']
 
@@ -121,7 +122,7 @@ export default function ChatRoom({ chat, onBack }) {
   return (
     <div className="screen" onClick={() => menuOpen && setMenuOpen(false)}>
       <header className="topbar chat-head">
-        <button className="icon-btn" onClick={onBack}>‹</button>
+        <button className="icon-btn" onClick={onBack}><IconBack /></button>
         {chat.other.photoURL ? (
           <img className="avatar sm" src={chat.other.photoURL} alt="" />
         ) : (
@@ -141,7 +142,7 @@ export default function ChatRoom({ chat, onBack }) {
             }}
             title="Menu"
           >
-            ⋮
+            <IconDots />
           </button>
           {menuOpen && (
             <div className="dropdown" onClick={(e) => e.stopPropagation()}>
@@ -152,7 +153,7 @@ export default function ChatRoom({ chat, onBack }) {
                   setShowInfo(true)
                 }}
               >
-                🖼️ Media & links
+                <IconImage size={18} /> Media & links
               </button>
               <button
                 className="dropdown-item"
@@ -161,10 +162,10 @@ export default function ChatRoom({ chat, onBack }) {
                   openNickEditor()
                 }}
               >
-                ✎ Set nickname
+                <IconPencil size={18} /> Set nickname
               </button>
               <button className="dropdown-item danger-item" onClick={handleClearChat}>
-                🗑 Clear chat
+                <IconTrash size={18} /> Clear chat
               </button>
             </div>
           )}
@@ -198,7 +199,7 @@ export default function ChatRoom({ chat, onBack }) {
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-head">
               <h3>Nickname</h3>
-              <button className="icon-btn" onClick={() => setEditingNick(false)}>✕</button>
+              <button className="icon-btn" onClick={() => setEditingNick(false)}><IconClose /></button>
             </div>
             <p className="muted">
               Set a private nickname for <b>{chat.other.displayName}</b>. Only you can see it.
@@ -222,10 +223,10 @@ export default function ChatRoom({ chat, onBack }) {
         <div className="sheet-backdrop" onClick={() => setSelectedMsg(null)}>
           <div className="sheet action-sheet" onClick={(e) => e.stopPropagation()}>
             {selectedMsg.type === 'text' && (
-              <button className="action-item" onClick={copyMessage}>📋 Copy</button>
+              <button className="action-item" onClick={copyMessage}>Copy</button>
             )}
             <button className="action-item danger-text" onClick={removeMessage}>
-              🗑 Delete message
+              <IconTrash size={18} /> Delete message
             </button>
             <button className="action-item" onClick={() => setSelectedMsg(null)}>Cancel</button>
           </div>

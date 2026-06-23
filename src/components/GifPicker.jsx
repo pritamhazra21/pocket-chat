@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { searchGifs } from '../lib/giphy.js'
+import { IconClose } from './Icons.jsx'
 
 export default function GifPicker({ onPick, onClose }) {
   const [q, setQ] = useState('')
@@ -40,7 +41,7 @@ export default function GifPicker({ onPick, onClose }) {
           onChange={(e) => onType(e.target.value)}
           autoFocus
         />
-        <button className="icon-btn" onClick={onClose}>✕</button>
+        <button className="icon-btn" onClick={onClose}><IconClose /></button>
       </div>
       {error && <p className="muted error">{error}</p>}
       {loading && <p className="muted">Loading…</p>}

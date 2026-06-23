@@ -1,4 +1,5 @@
 import { downloadMedia } from '../lib/download.js'
+import { IconClose, IconDownload } from './Icons.jsx'
 
 export default function MediaViewer({ items, index, onIndex, onClose }) {
   const item = items[index]
@@ -14,14 +15,14 @@ export default function MediaViewer({ items, index, onIndex, onClose }) {
   return (
     <div className="viewer fade-in" onClick={onClose}>
       <div className="viewer-top" onClick={(e) => e.stopPropagation()}>
-        <button className="icon-btn" onClick={onClose}>✕</button>
+        <button className="icon-btn" onClick={onClose}><IconClose size={24} /></button>
         <span className="muted">{index + 1} / {items.length}</span>
         <button
           className="icon-btn"
           title="Save to device"
           onClick={() => downloadMedia(item.url, filename)}
         >
-          ⬇
+          <IconDownload size={24} />
         </button>
       </div>
 

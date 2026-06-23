@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import VoiceMessage from './VoiceMessage.jsx'
 
 function timeOf(ts) {
   if (!ts?.toMillis) return ''
@@ -94,12 +95,7 @@ export default function MessageBubble({
         <video className="media" src={media.url} controls playsInline preload="metadata" />
       )}
 
-      {type === 'audio' && (
-        <div className="voice">
-          <span className="voice-icon">🎤</span>
-          <audio className="voice-audio" src={media.url} controls preload="metadata" />
-        </div>
-      )}
+      {type === 'audio' && <VoiceMessage url={media.url} duration={media.duration} />}
 
       <span className="meta">
         <span className="time">{timeOf(message.createdAt)}</span>
