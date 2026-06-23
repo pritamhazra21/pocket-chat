@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 function timeOf(ts) {
   if (!ts?.toMillis) return ''
   return new Date(ts.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -35,12 +37,30 @@ function Ticks({ status }) {
   )
 }
 
-export default function MessageBubble({ message, mine, otherLastRead, otherLastSeen }) {
+export default function MessageBubble({ message, mine, otherLastRead, otherLastSeen, onSelect }) {
   const { type, text, media } = message
   const status = mine ? statusOf(message, otherLastRead, otherLastSeen) : null
+  const timer = useRef(null)
+
+  // Long-press (touch) or right-click (desktop) opens the message actions.
+  const startPress = () => {
+    timer.current = setTimeout(() => onSelect?.(message), 450)
+  }
+  const cancelPress = () => {
+    if (timer.current) clearTimeout(timer.current)
+  }
 
   return (
-    <div className={'bubble ' + (mine ? 'out' : 'in')}>
+    <div
+      className={'bubble ' + (mine ? 'out' : 'in')}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onSelect?.(message)
+      }}
+      onTouchStart={startPress}
+      onTouchEnd={cancelPress}
+      onTouchMove={cancelPress}
+    >
       {type === 'text' && <span className="text">{text}</span>}
 
       {type === 'image' && (

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import {
+  clearChat,
+  deleteMessage,
   listenChat,
   listenMessages,
   listenPrefs,
@@ -20,6 +22,8 @@ export default function ChatRoom({ chat, onBack }) {
   const [prefs, setPrefs] = useState({})
   const [editingNick, setEditingNick] = useState(false)
   const [nickInput, setNickInput] = useState('')
+  const [selectedMsg, setSelectedMsg] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const bottomRef = useRef(null)
 
   useEffect(() => listenMessages(chat.id, setMessages), [chat.id])
@@ -37,6 +41,35 @@ export default function ChatRoom({ chat, onBack }) {
   const saveNick = async () => {
     await setNickname(user.uid, chat.other.uid, nickInput.trim())
     setEditingNick(false)
+  }
+
+  const removeMessage = async () => {
+    if (!selectedMsg) return
+    try {
+      await deleteMessage(chat.id, selectedMsg.id)
+    } catch (e) {
+      alert(e.message)
+    }
+    setSelectedMsg(null)
+  }
+
+  const copyMessage = async () => {
+    if (selectedMsg?.text) {
+      try {
+        await navigator.clipboard.writeText(selectedMsg.text)
+      } catch {}
+    }
+    setSelectedMsg(null)
+  }
+
+  const handleClearChat = async () => {
+    setMenuOpen(false)
+    if (!confirm('Clear this entire conversation? This deletes all messages for both of you.')) return
+    try {
+      await clearChat(chat.id)
+    } catch (e) {
+      alert(e.message)
+    }
   }
 
   useEffect(() => {
@@ -70,7 +103,7 @@ export default function ChatRoom({ chat, onBack }) {
     : lastSeenText(otherUser?.lastSeen)
 
   return (
-    <div className="screen">
+    <div className="screen" onClick={() => menuOpen && setMenuOpen(false)}>
       <header className="topbar chat-head">
         <button className="icon-btn" onClick={onBack}>‹</button>
         {chat.other.photoURL ? (
@@ -82,7 +115,35 @@ export default function ChatRoom({ chat, onBack }) {
           <span className="name">{displayName}</span>
           <span className={'status ' + (status === 'online' ? 'on' : '')}>{status}</span>
         </button>
-        <button className="icon-btn nick-btn" onClick={openNickEditor} title="Set nickname">✎</button>
+
+        <div className="menu-wrap">
+          <button
+            className="icon-btn dots"
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen((v) => !v)
+            }}
+            title="Menu"
+          >
+            ⋮
+          </button>
+          {menuOpen && (
+            <div className="dropdown" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="dropdown-item"
+                onClick={() => {
+                  setMenuOpen(false)
+                  openNickEditor()
+                }}
+              >
+                ✎ Set nickname
+              </button>
+              <button className="dropdown-item danger-item" onClick={handleClearChat}>
+                🗑 Clear chat
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="messages">
@@ -93,6 +154,7 @@ export default function ChatRoom({ chat, onBack }) {
             mine={m.senderId === user.uid}
             otherLastRead={otherLastRead}
             otherLastSeen={otherLastSeen}
+            onSelect={setSelectedMsg}
           />
         ))}
         {otherTyping && (
@@ -126,6 +188,20 @@ export default function ChatRoom({ chat, onBack }) {
             <button className="primary" onClick={saveNick}>
               {nickInput.trim() ? 'Save nickname' : 'Clear nickname'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {selectedMsg && (
+        <div className="sheet-backdrop" onClick={() => setSelectedMsg(null)}>
+          <div className="sheet action-sheet" onClick={(e) => e.stopPropagation()}>
+            {selectedMsg.type === 'text' && (
+              <button className="action-item" onClick={copyMessage}>📋 Copy</button>
+            )}
+            <button className="action-item danger-text" onClick={removeMessage}>
+              🗑 Delete message
+            </button>
+            <button className="action-item" onClick={() => setSelectedMsg(null)}>Cancel</button>
           </div>
         </div>
       )}

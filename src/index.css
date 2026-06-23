@@ -36,6 +36,14 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* ---- Custom scrollbars (themed, slim) ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar-corner { background: transparent; }
+
 html, body, #root { height: 100%; margin: 0; }
 
 body {
@@ -102,6 +110,16 @@ body {
   padding: 10px 12px; border-radius: 8px; font-size: 15px; cursor: pointer;
 }
 .dropdown-item:active, .dropdown-item:hover { background: var(--panel); }
+.dropdown-item.danger-item { color: #f0928c; }
+
+/* Message action sheet (long-press / right-click) */
+.action-sheet { padding: 10px; }
+.action-item {
+  width: 100%; text-align: left; background: transparent; border: none; color: var(--text);
+  padding: 14px 12px; border-radius: 10px; font-size: 16px; cursor: pointer;
+}
+.action-item:active, .action-item:hover { background: var(--panel-2); }
+.action-item.danger-text { color: #f0928c; }
 
 /* Unread badge on chat list */
 .list-item { position: relative; }

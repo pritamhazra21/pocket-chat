@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -13,6 +14,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
@@ -142,6 +144,27 @@ export async function sendMessage(chatId, senderId, recipientId, payload) {
     lastMessageSender: senderId,
     // bump the recipient's unread counter
     [`unread.${recipientId}`]: increment(1),
+  })
+}
+
+// Delete a single message (removes it for both participants).
+export async function deleteMessage(chatId, msgId) {
+  await deleteDoc(doc(db, 'chats', chatId, 'messages', msgId))
+}
+
+// Clear an entire conversation — delete all messages and reset chat metadata.
+export async function clearChat(chatId) {
+  const snap = await getDocs(collection(db, 'chats', chatId, 'messages'))
+  // writeBatch handles up to 500 ops; chunk to be safe.
+  for (let i = 0; i < snap.docs.length; i += 450) {
+    const batch = writeBatch(db)
+    snap.docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref))
+    await batch.commit()
+  }
+  await updateDoc(doc(db, 'chats', chatId), {
+    lastMessage: '',
+    lastMessageSender: '',
+    unread: {},
   })
 }
 
