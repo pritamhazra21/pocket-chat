@@ -13,6 +13,15 @@ export default function MessageInput({ chatId, recipientUid }) {
   const [upload, setUpload] = useState(null) // { progress }
   const fileRef = useRef(null)
   const cameraRef = useRef(null)
+  const taRef = useRef(null)
+
+  // Auto-grow the textarea with content, up to a max height.
+  const adjustHeight = () => {
+    const el = taRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+  }
 
   const notify = (preview) =>
     sendPush({
@@ -26,6 +35,7 @@ export default function MessageInput({ chatId, recipientUid }) {
     const t = text.trim()
     if (!t) return
     setText('')
+    if (taRef.current) taRef.current.style.height = 'auto' // reset to one line
     setTyping(chatId, user.uid, false)
     await sendMessage(chatId, user.uid, recipientUid, { text: t })
     notify(t)
@@ -33,6 +43,7 @@ export default function MessageInput({ chatId, recipientUid }) {
 
   const onChange = (e) => {
     setText(e.target.value)
+    adjustHeight()
     onTypingInput(chatId, user.uid)
   }
 
@@ -84,13 +95,20 @@ export default function MessageInput({ chatId, recipientUid }) {
           title="GIF"
         >GIF</button>
 
-        <input
-          className="text-input"
+        <textarea
+          ref={taRef}
+          className="text-input composer-text"
           placeholder="Message"
+          rows={1}
           value={text}
           onChange={onChange}
           onFocus={() => setPanel(null)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              send()
+            }
+          }}
         />
 
         <button className="icon-btn" onClick={() => cameraRef.current?.click()} title="Camera">📷</button>

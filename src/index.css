@@ -283,10 +283,19 @@ body {
 /* ---- Composer ---- */
 .composer-wrap { background: var(--panel); border-top: 1px solid var(--line); }
 .composer {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: flex-end; gap: 4px;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
 }
 .composer .text-input { margin-top: 0; flex: 1; border-radius: 20px; }
+.composer-text {
+  resize: none;
+  max-height: 120px;
+  overflow-y: auto;
+  line-height: 1.35;
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .composer .icon-btn { font-size: 18px; }
 .send-btn {
   background: var(--accent); color: #fff; border: none;
